@@ -2,10 +2,10 @@
 
 A new Flutter project.
 
-## Getting Started
-## An Intelligent Virtual Assistant with OpenAI APIs for context-based text and image responses.
-## Integrated typing and voice interactions for user engagement.
-## AI Image Generation using Dall-E API and REST API
+### Getting Started
+### An Intelligent Virtual Assistant with OpenAI APIs for context-based text and image responses.
+### Integrated typing and voice interactions for user engagement.
+### AI Image Generation using Dall-E API and REST API
 
 
   <img src="https://github.com/deepi-badshah/Bot-Quest/blob/main/project_demo/Bot_quest_01.jpg" alt="MLBC" width="200" height="450">  <img src="https://github.com/deepi-badshah/Bot-Quest/blob/main/project_demo/Bot_quest_02.jpg" alt="MLBC" width="200" height="450">  <img src="https://github.com/deepi-badshah/Bot-Quest/blob/main/project_demo/Bot_quest_03.jpg" alt="MLBC" width="200" height="450">  <img src="https://github.com/deepi-badshah/Bot-Quest/blob/main/project_demo/Bot_quest_04.jpg" alt="MLBC" width="200" height="450">
