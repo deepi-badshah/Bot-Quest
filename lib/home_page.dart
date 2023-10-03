@@ -1,11 +1,11 @@
-import 'package:quest/feature_box.dart';
-import 'package:quest/openai_service.dart';
-import 'package:quest/pallete.dart';
-import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
+import 'package:quest/openai_service.dart'; // You might need to import this if it's not already imported.
+import 'package:quest/pallete.dart';
+import 'package:quest/feature_box.dart'; // You might need to import this if it's not already imported.
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -15,14 +15,17 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  TextEditingController messageController = TextEditingController();
   final speechToText = SpeechToText();
   final flutterTts = FlutterTts();
-  String lastWords = '';
+  String lastWords = "";
+  String recognizedSpeech = ""; // Separate variable for recognized speech
   final OpenAIService openAIService = OpenAIService();
   String? generatedContent;
   String? generatedImageUrl;
   int start = 200;
   int delay = 200;
+  bool isListening = false;
 
   @override
   void initState() {
@@ -43,18 +46,21 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> startListening() async {
     await speechToText.listen(onResult: onSpeechResult);
+    isListening = true;
     setState(() {});
   }
 
   Future<void> stopListening() async {
     await speechToText.stop();
+    isListening = false;
     setState(() {});
   }
 
   void onSpeechResult(SpeechRecognitionResult result) {
     setState(() {
-      lastWords = result.recognizedWords;
+      recognizedSpeech = result.recognizedWords;
     });
+    // print("lastWrds are" + lastWords);
   }
 
   Future<void> systemSpeak(String content) async {
@@ -72,7 +78,6 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // backgroundColor: Colors.blue, // Set a custom background color
         title: BounceInDown(
           child: const Text(
             'Bot Quest',
@@ -85,6 +90,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         centerTitle: true,
+        backgroundColor: Pallete.mainFontColor.withOpacity(0.1),
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -107,7 +113,6 @@ class _HomePageState extends State<HomePage> {
                   Container(
                     height: 130,
                     decoration: const BoxDecoration(
-                      // shape: BoxShape.circle,
                       image: DecorationImage(
                         image: AssetImage(
                           'assets/images/virtualAssistant.png',
@@ -215,38 +220,119 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ],
               ),
-            )
+            ),
+            SizedBox(
+                height: MediaQuery.of(context)
+                    .viewInsets
+                    .bottom), // Adjusts for the keyboard
           ],
         ),
       ),
-      floatingActionButton: ZoomIn(
-        delay: Duration(milliseconds: start + 3 * delay),
-        child: FloatingActionButton(
-          backgroundColor: Pallete.firstSuggestionBoxColor,
-          onPressed: () async {
-            if (await speechToText.hasPermission &&
-                speechToText.isNotListening) {
-              await startListening();
-            } else if (speechToText.isListening) {
-              final speech = await openAIService.isArtPromptAPI(lastWords);
-              if (speech.contains('https')) {
-                generatedImageUrl = speech;
-                generatedContent = null;
-                setState(() {});
-              } else {
-                generatedImageUrl = null;
-                generatedContent = speech;
-                setState(() {});
-                await systemSpeak(speech);
-              }
-              await stopListening();
-            } else {
-              initSpeechToText();
-            }
-          },
-          child: Icon(
-            speechToText.isListening ? Icons.stop : Icons.mic_sharp,
-          ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        color: Pallete.mainFontColor.withOpacity(0.1),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: messageController,
+                style: const TextStyle(
+                  color: Pallete.mainFontColor,
+                ),
+                cursorColor: Pallete.mainFontColor.withOpacity(0.1),
+                decoration: InputDecoration(
+                  hintText: "Whats in your mind...",
+                  hintStyle: TextStyle(
+                    // color: Colors.white,
+                    fontSize: 18,
+                    fontStyle: FontStyle.italic, fontFamily: 'Cera Pro',
+                    color: Pallete.mainFontColor.withOpacity(0.5),
+                  ),
+                  border: InputBorder.none,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: () async {
+                setState(() {
+                  lastWords = messageController.text;
+                });
+                final speech = await openAIService.isArtPromptAPI(lastWords);
+                if (speech.contains('https')) {
+                  generatedImageUrl = speech;
+                  generatedContent = null;
+                  setState(() {
+                    lastWords = "";
+                  });
+                } else {
+                  generatedImageUrl = null;
+                  generatedContent = speech;
+                  setState(() {});
+                  lastWords = "";
+                  await systemSpeak(speech);
+                }
+              },
+              child: Container(
+                height: 50,
+                width: 50,
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.send,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(
+              width: 5,
+            ),
+            GestureDetector(
+              onTap: () async {
+                if (await speechToText.hasPermission &&
+                    speechToText.isNotListening) {
+                  await startListening();
+                } else if (speechToText.isListening) {
+                  final speech =
+                      await openAIService.isArtPromptAPI(recognizedSpeech);
+                  if (speech.contains('https')) {
+                    generatedImageUrl = speech;
+                    generatedContent = null;
+                    setState(() {
+                      // lastWords = "";
+                    });
+                  } else {
+                    generatedImageUrl = null;
+                    generatedContent = speech;
+                    setState(() {});
+                    await systemSpeak(speech);
+                  }
+                  await stopListening();
+                  recognizedSpeech = "";
+                } else {
+                  initSpeechToText();
+                }
+              },
+              child: Container(
+                height: 50,
+                width: 50,
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Center(
+                  child: Icon(
+                    isListening ? Icons.stop : Icons.mic_sharp,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
